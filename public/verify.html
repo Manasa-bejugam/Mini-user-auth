@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify Email - Mini Auth</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -17,81 +16,55 @@
                 <ul class="nav-links">
                     <li><a href="/">Home</a></li>
                     <li><a href="/login.html">Login</a></li>
-                    <li><a href="/register.html">Register</a></li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container">
-        <div class="auth-container">
-            <div class="card">
-                <div class="card-header">
-                    <h1>Email Verification</h1>
-                    <p id="status-text">Verifying your email...</p>
-                </div>
-
-                <div id="alert-container"></div>
-
-                <div class="text-center" id="loading-spinner">
-                    <div class="spinner" style="width: 50px; height: 50px; margin: 2rem auto;"></div>
-                </div>
-
-                <div id="success-content" class="hidden text-center">
-                    <div style="font-size: 4rem; margin: 2rem 0;">✅</div>
-                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">
-                        Your email has been verified successfully!
-                    </p>
-                    <a href="/login.html" class="btn btn-primary">Go to Login</a>
-                </div>
-
-                <div id="error-content" class="hidden text-center">
-                    <div style="font-size: 4rem; margin: 2rem 0;">❌</div>
-                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">
-                        Verification failed. The link may be invalid or expired.
-                    </p>
-                    <a href="/register.html" class="btn btn-secondary">Register Again</a>
-                </div>
+    <div class="auth-container">
+        <div class="card">
+            <div class="card-header">
+                <h1>Email Verification</h1>
+                <p>Verifying your email...</p>
             </div>
+
+            <div id="message"></div>
         </div>
     </div>
 
-    <script src="/js/auth.js"></script>
     <script>
         // Get token from URL
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
 
-        window.addEventListener('DOMContentLoaded', async () => {
-            if (!token) {
-                document.getElementById('loading-spinner').classList.add('hidden');
-                document.getElementById('error-content').classList.remove('hidden');
-                document.getElementById('status-text').textContent = 'Invalid verification link';
-                showAlert('Invalid verification link', 'error');
-                return;
-            }
+        if (!token) {
+            showMessage('No verification token found', 'error');
+        } else {
+            verifyEmail(token);
+        }
 
+        async function verifyEmail(token) {
             try {
-                const result = await verifyEmail(token);
-
-                document.getElementById('loading-spinner').classList.add('hidden');
+                const response = await fetch(`/api/auth/verify/${token}`);
+                const result = await response.json();
 
                 if (result.success) {
-                    document.getElementById('success-content').classList.remove('hidden');
-                    document.getElementById('status-text').textContent = 'Email verified!';
-                    showAlert(result.message, 'success');
+                    showMessage('Email verified successfully! Redirecting to login...', 'success');
+                    setTimeout(() => window.location.href = '/login.html', 2000);
                 } else {
-                    document.getElementById('error-content').classList.remove('hidden');
-                    document.getElementById('status-text').textContent = 'Verification failed';
-                    showAlert(result.message, 'error');
+                    showMessage(result.message || 'Verification failed', 'error');
                 }
             } catch (error) {
-                document.getElementById('loading-spinner').classList.add('hidden');
-                document.getElementById('error-content').classList.remove('hidden');
-                document.getElementById('status-text').textContent = 'Verification failed';
-                showAlert(error.message || 'Verification failed', 'error');
+                showMessage('Something went wrong. Please try again.', 'error');
             }
-        });
+        }
+
+        function showMessage(msg, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = `alert alert-${type}`;
+            messageDiv.textContent = msg;
+            messageDiv.classList.remove('hidden');
+        }
     </script>
 </body>
 

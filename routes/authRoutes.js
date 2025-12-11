@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
-const { register, verifyEmail, login, forgotPassword, resetPassword } = require('../controllers/authController');
+const { register, verifyEmail, login } = require('../controllers/authController');
 const { validationResult } = require('express-validator');
 
 // Validation middleware
@@ -55,25 +55,5 @@ router.post('/login', [
         .notEmpty()
         .withMessage('Password is required')
 ], validate, login);
-
-// @route   POST /api/auth/forgot-password
-// @desc    Request password reset
-// @access  Public
-router.post('/forgot-password', [
-    body('email')
-        .trim()
-        .isEmail()
-        .withMessage('Please provide a valid email')
-        .normalizeEmail()
-], validate, forgotPassword);
-
-// @route   POST /api/auth/reset-password/:token
-// @desc    Reset password
-// @access  Public
-router.post('/reset-password/:token', [
-    body('password')
-        .isLength({ min: 6 })
-        .withMessage('Password must be at least 6 characters')
-], validate, resetPassword);
 
 module.exports = router;

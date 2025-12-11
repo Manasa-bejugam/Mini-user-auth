@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Mini Auth</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -15,103 +14,71 @@
             <div class="nav-content">
                 <div class="logo">🔐 Mini Auth</div>
                 <ul class="nav-links">
-                    <li><a href="/dashboard.html">Dashboard</a></li>
-                    <li><a href="#" id="logout-btn">Logout</a></li>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="#" onclick="logout()">Logout</a></li>
                 </ul>
             </div>
         </div>
     </nav>
 
     <div class="container">
-        <div class="dashboard-header">
-            <h1>Dashboard</h1>
-        </div>
-
-        <div id="alert-container"></div>
-
         <div class="user-info">
-            <h2>👤 User Profile</h2>
-            <div class="user-detail">
-                <label>User ID:</label>
-                <span id="user-id">Loading...</span>
-            </div>
-            <div class="user-detail">
-                <label>Username:</label>
-                <span id="username">Loading...</span>
-            </div>
-            <div class="user-detail">
-                <label>Email:</label>
-                <span id="email">Loading...</span>
-            </div>
-            <div class="user-detail">
-                <label>Account Status:</label>
-                <span style="color: #51cf66;">✓ Verified</span>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>🎉 Welcome to Your Dashboard!</h2>
-            <p style="color: var(--text-secondary); margin-top: 1rem;">
-                You have successfully logged in to your account. This is a protected route that requires authentication.
-            </p>
-            <p style="color: var(--text-secondary); margin-top: 1rem;">
-                Your session is secured with JWT (JSON Web Token) authentication, and your password is safely hashed
-                using bcrypt.
-            </p>
-            <div style="margin-top: 2rem;">
-                <h3>Features Available:</h3>
-                <ul style="color: var(--text-secondary); margin-top: 1rem; line-height: 2;">
-                    <li>✅ Secure JWT Authentication</li>
-                    <li>✅ Email Verification</li>
-                    <li>✅ Password Reset Functionality</li>
-                    <li>✅ Protected Routes</li>
-                    <li>✅ User Profile Management</li>
-                </ul>
-            </div>
+            <h2>User Dashboard</h2>
+            <div id="userDetails"></div>
         </div>
     </div>
 
-    <script src="/js/auth.js"></script>
     <script>
-        // Check authentication on page load
-        window.addEventListener('DOMContentLoaded', async () => {
-            const token = getToken();
+        // Check if user is logged in
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+        }
 
-            if (!token) {
-                showAlert('Please login to access this page', 'error');
-                setTimeout(() => {
-                    window.location.href = '/login.html';
-                }, 1500);
-                return;
-            }
-
+        // Load user profile
+        async function loadProfile() {
             try {
-                const result = await getUserProfile();
+                const response = await fetch('/api/user/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const result = await response.json();
 
                 if (result.success) {
-                    const user = result.data.user;
-                    document.getElementById('user-id').textContent = user._id;
-                    document.getElementById('username').textContent = user.username;
-                    document.getElementById('email').textContent = user.email;
+                    const user = result.data;
+                    document.getElementById('userDetails').innerHTML = `
+                        <div class="user-detail">
+                            <label>Username:</label>
+                            <span>${user.username}</span>
+                        </div>
+                        <div class="user-detail">
+                            <label>Email:</label>
+                            <span>${user.email}</span>
+                        </div>
+                        <div class="user-detail">
+                            <label>Status:</label>
+                            <span>${user.isVerified ? '✅ Verified' : '❌ Not Verified'}</span>
+                        </div>
+                    `;
                 } else {
-                    showAlert('Failed to load profile', 'error');
-                    setTimeout(() => {
-                        logout();
-                    }, 1500);
+                    alert('Failed to load profile');
+                    logout();
                 }
             } catch (error) {
-                showAlert('Session expired. Please login again.', 'error');
-                setTimeout(() => {
-                    logout();
-                }, 1500);
+                console.error('Error:', error);
+                logout();
             }
-        });
+        }
 
-        // Logout functionality
-        document.getElementById('logout-btn').addEventListener('click', (e) => {
-            e.preventDefault();
-            logout();
-        });
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
+
+        loadProfile();
     </script>
 </body>
 
