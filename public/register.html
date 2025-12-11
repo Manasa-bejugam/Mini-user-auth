@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Mini Auth</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">🔐 Mini Auth</div>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/login.html">Login</a></li>
+                    <li><a href="/register.html">Register</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="auth-container">
+            <div class="card">
+                <div class="card-header">
+                    <h1>Create Account</h1>
+                    <p>Join us today and get started</p>
+                </div>
+
+                <div id="alert-container"></div>
+
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" class="form-input"
+                            placeholder="Enter your username" required minlength="3" maxlength="30">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-input" placeholder="Enter your email"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" class="form-input"
+                            placeholder="Enter your password" required minlength="6">
+                        <div class="password-strength" id="password-strength">
+                            <div class="password-strength-bar" id="strength-bar"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm-password">Confirm Password</label>
+                        <input type="password" id="confirm-password" name="confirm-password" class="form-input"
+                            placeholder="Confirm your password" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block" id="submit-btn">
+                        Create Account
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    Already have an account? <a href="/login.html">Sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        const form = document.getElementById('register-form');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirm-password');
+        const strengthBar = document.getElementById('strength-bar');
+
+        // Password strength indicator
+        passwordInput.addEventListener('input', (e) => {
+            const password = e.target.value;
+            let strength = 0;
+
+            if (password.length >= 6) strength++;
+            if (password.length >= 10) strength++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+            if (/\d/.test(password)) strength++;
+            if (/[^a-zA-Z\d]/.test(password)) strength++;
+
+            strengthBar.className = 'password-strength-bar';
+            if (strength <= 2) {
+                strengthBar.classList.add('strength-weak');
+            } else if (strength <= 4) {
+                strengthBar.classList.add('strength-medium');
+            } else {
+                strengthBar.classList.add('strength-strong');
+            }
+        });
+
+        // Form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                showAlert('Passwords do not match', 'error');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Creating Account<span class="spinner"></span>';
+
+            try {
+                const result = await register({ username, email, password });
+
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    form.reset();
+                    strengthBar.className = 'password-strength-bar';
+
+                    setTimeout(() => {
+                        showAlert('Redirecting to login...', 'info');
+                        setTimeout(() => {
+                            window.location.href = '/login.html';
+                        }, 1500);
+                    }, 2000);
+                } else {
+                    showAlert(result.message, 'error');
+                }
+            } catch (error) {
+                showAlert(error.message || 'Registration failed. Please try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Create Account';
+            }
+        });
+    </script>
+</body>
+
+</html>
